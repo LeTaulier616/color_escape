@@ -16,8 +16,8 @@ using System.Collections;
 public class vp_WaypointGizmo : MonoBehaviour
 {
 	
-	protected Color m_GizmoColor = new Color(1f,1f,1f,.4f);
-	protected Color m_SelectedGizmoColor = new Color32(160, 255, 100, 100);
+	private Color m_GizmoColor = new Color(0f,1f,0f,.5f);
+	private Color m_SelectedGizmoColor = new Color(0f,1f,0f,1f);
 	
 	/// <summary>
 	/// 

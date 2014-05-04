@@ -11,8 +11,6 @@ public class EnemyWaypointGizmo : MonoBehaviour
 		Gizmos.matrix = transform.localToWorldMatrix;
 		Gizmos.color = m_GizmoColor;
 		Gizmos.DrawCube(Vector3.zero,Vector3.one);
-		Gizmos.color = new Color(0f,0f,0f,1f);
-		Gizmos.DrawLine(Vector3.zero,Vector3.forward);
 	}
 
 	public void OnDrawGizmosSelected()
@@ -20,7 +18,5 @@ public class EnemyWaypointGizmo : MonoBehaviour
 		Gizmos.matrix = transform.localToWorldMatrix;
 		Gizmos.color = m_SelectedGizmoColor;
 		Gizmos.DrawCube(Vector3.zero,Vector3.one);
-		Gizmos.color = new Color(0f,0f,0f,1f);
-		Gizmos.DrawLine(Vector3.zero,Vector3.forward);	
 	}
 }

@@ -175,6 +175,7 @@ public class vp_FPController : vp_Component
 			collider.radius = CharacterController.radius + m_SkinWidth;
 			collider.height = CharacterController.height + (m_SkinWidth * 2.0f);
 			collider.center = CharacterController.center;
+			m_Trigger.tag = "Player";
 			m_Trigger.layer = vp_Layer.LocalPlayer;
 			m_Trigger.transform.localPosition = Vector3.zero;
 		}

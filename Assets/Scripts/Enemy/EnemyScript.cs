@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class EnemyScript : MonoBehaviour 
+public class EnemyScript : StateMachine
 {
 	[SerializeField]
 	public GameObject pathArray;
@@ -39,22 +39,25 @@ public class EnemyScript : MonoBehaviour
 
 	[SerializeField]
 	public int rayMask;
-
+	
+	public MovingState moving;
+	public IdleState idle;
+	public RotateState rotate;
+	public AttackState attack;
+	
 	private GameObject player;
 	
-	private bool isMoving;
-	private bool isRotating;
 	private bool reversePath;
 
-	private float moveTime;
-	private int currentWaypoint;
+	public float delayTime;
+	public int currentWaypoint;
 
 	private RaycastHit hitInfo;
 
 	private float playerDistance;
 	private float playerAngle;
 	
-	private Quaternion toAngle;
+	public Quaternion rotationAngle;
 
 	protected class WaypointComparer : IComparer
 	{
@@ -67,78 +70,59 @@ public class EnemyScript : MonoBehaviour
 	{
 		currentWaypoint = 0;
 
-		isMoving = true;
-		isRotating = false;
 		reversePath = false;
 		
-		toAngle = Quaternion.identity;
+		moving = new MovingState();
+		idle = new IdleState();
+		rotate = new RotateState();
+		attack = new AttackState();
+		
+		rotationAngle = Quaternion.identity;
 
 		transform.position = pathWaypoints[currentWaypoint].position;
 
 		player = GameObject.FindGameObjectWithTag("Player");
+		playerDistance = 0.0f;
+		playerAngle = 0.0f;
+		
+		this.SwitchState(this.moving);
 	}
 	
-	// Update is called once per frame
-	void Update () 
+	
+	public void UpdatePlayerData()
 	{
 		playerDistance = Vector3.Distance(transform.position, player.transform.position);
 		playerAngle = Vector3.Angle(transform.forward, player.transform.position - transform.position);
+	}
+	
+	public void Move()
+	{
+		transform.position = Vector3.MoveTowards(transform.position,
+		                                         pathWaypoints[currentWaypoint].position,
+		                                         waypointSpeed[currentWaypoint] * Time.deltaTime);
 
-		Move();
-		Look ();
-
-		if(!isRotating)
+		/*
+		if(!reversePath)
 		{
-			Quaternion waypointLookAt = Quaternion.LookRotation(pathWaypoints[currentWaypoint].position - transform.position);
-			RotatePlayer(waypointLookAt);
+
+			transform.position = Vector3.Lerp(pathWaypoints[currentWaypoint].position,
+			                                  pathWaypoints[currentWaypoint - 1].position,
+			                                  Mathf.Abs((moveTime % 2.0f) - 1.0f));
 		}
-			
+
 		else
 		{
-			RotatePlayer(toAngle);
+
+			transform.position = Vector3.Lerp(pathWaypoints[currentWaypoint].position,
+			                                  pathWaypoints[currentWaypoint + 1].position,
+			                                  Mathf.Abs((moveTime % 2.0f) - 1.0f));
 		}
+
+		moveTime += Time.deltaTime / waypointSpeed[currentWaypoint];
+		*/
 	}
 
-	void Move()
-	{
-		if(isMoving)
-		{
-			if( !CheckDistance(transform.position, pathWaypoints[currentWaypoint].position, 0.001f) )
-			{
-				transform.position = Vector3.MoveTowards(transform.position,
-				                                         pathWaypoints[currentWaypoint].position,
-				                                         waypointSpeed[currentWaypoint] * Time.deltaTime);
-
-				/*
-				if(!reversePath)
-				{
-
-					transform.position = Vector3.Lerp(pathWaypoints[currentWaypoint].position,
-					                                  pathWaypoints[currentWaypoint - 1].position,
-					                                  Mathf.Abs((moveTime % 2.0f) - 1.0f));
-				}
-
-				else
-				{
-
-					transform.position = Vector3.Lerp(pathWaypoints[currentWaypoint].position,
-					                                  pathWaypoints[currentWaypoint + 1].position,
-					                                  Mathf.Abs((moveTime % 2.0f) - 1.0f));
-				}
-
-				moveTime += Time.deltaTime / waypointSpeed[currentWaypoint];
-				*/
-			}
-
-			else
-			{
-				//moveTime = 0.0f;
-				OnWaypointReached(currentWaypoint);
-			}
-		}
-	}
-
-	void Look()
+	public void Look()
 	{
 		if(playerDistance <= sightDistance && playerAngle <= fieldOfView)
 		{
@@ -151,7 +135,7 @@ public class EnemyScript : MonoBehaviour
 			}
 		}
 	}
-
+	
 	void OnDrawGizmos()
 	{
 		Vector3 origin = Vector3.zero;
@@ -184,7 +168,7 @@ public class EnemyScript : MonoBehaviour
 
 	}
 
-	bool CheckDistance(Vector3 a, Vector3 b, float leniency)
+	public bool CheckDistance(Vector3 a, Vector3 b, float leniency)
 	{
 		if((a-b).sqrMagnitude <= (a * leniency).sqrMagnitude)
 		{
@@ -194,36 +178,7 @@ public class EnemyScript : MonoBehaviour
 			return false;
 	}
 
-	void OnWaypointReached(int waypointNumber)
-	{
-		isMoving = false;
-		
-		if(waypointRotate[waypointNumber])
-		{
-			SetRotationQuaternion(waypointAngle[waypointNumber]);
-			if(waypointRotateTime[waypointNumber] > 0.0f)
-			{
-				Invoke("EnableRotation", waypointRotateTime[waypointNumber]);;
-			}
-			
-			else
-			{
-				isRotating = true;
-			}
-		}
-		
-		if(waypointWait[waypointNumber] > 0.0f)
-		{
-			Invoke("ToNextWaypoint", waypointWait[waypointNumber]);
-		}
-
-		else
-		{
-			ToNextWaypoint();
-		}
-	}
-
-	void ToNextWaypoint()
+	public void SetNextWaypoint()
 	{
 		if(!reversePath)
 		{
@@ -233,11 +188,10 @@ public class EnemyScript : MonoBehaviour
 			{
 				currentWaypoint--;
 				reversePath = true;
-				ToNextWaypoint();
+				SetNextWaypoint();
 			}
-
-			isMoving = true;
-			isRotating = false;
+			
+			Debug.Log(currentWaypoint);
 			return;
 		}
 
@@ -249,18 +203,12 @@ public class EnemyScript : MonoBehaviour
 			{
 				currentWaypoint++;
 				reversePath = false;
-				ToNextWaypoint();
+				SetNextWaypoint();
 			}
-
-			isMoving = true;
-			isRotating = false;
+			
+			Debug.Log(currentWaypoint);
 			return;
 		}
-	}
-	
-	void RotatePlayer(Quaternion angle)
-	{
-		transform.rotation = Quaternion.RotateTowards(transform.rotation, angle, 700.0f * Time.deltaTime);
 	}
 
 	public void GetWaypoints()
@@ -288,7 +236,7 @@ public class EnemyScript : MonoBehaviour
 		pathWaypoints.Sort(comparer.Compare);
 	}
 
-	void DrawWireCircle(Vector3 startPoint, Vector3 endPoint)
+	private void DrawWireCircle(Vector3 startPoint, Vector3 endPoint)
 	{
 		Vector3 startGizmo = startPoint;
 		Vector3 endGizmo   = new Vector3(
@@ -344,33 +292,139 @@ public class EnemyScript : MonoBehaviour
 
 		Gizmos.DrawLine(startGizmo, endGizmo);
 	}
+}
+
+public class MovingState : State
+{
+	private EnemyScript enemy;
 	
-	
-	void EnableRotation()
+	public override void EnterState(GameObject go)
 	{
-		isRotating = true;
+		enemy = go.GetComponent<EnemyScript>();
 	}
 	
-	void SetRotationQuaternion(float angle)
-	{
-		toAngle = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0.0f, angle, 0.0f));
+	public override void UpdateState(GameObject go)
+	{		
+		enemy.UpdatePlayerData();
+		enemy.Move();
+		
+		if(enemy.CheckDistance(enemy.transform.position, enemy.pathWaypoints[enemy.currentWaypoint].position, 0.001f))
+		{
+			this.machine.SwitchState(enemy.idle);
+			return;
+		}
+		
+		Quaternion waypointLookAt = Quaternion.LookRotation(enemy.pathWaypoints[enemy.currentWaypoint].position - enemy.transform.position);
+		enemy.transform.rotation = Quaternion.RotateTowards(enemy.transform.rotation, waypointLookAt, 700.0f * Time.deltaTime);
+		
+		enemy.Look();
 	}
 	
-		//Turn on the bit using an OR operation
-	private void ShowLayer(LayerMask mask, string name) 
+	public override void ExitState(GameObject go)
 	{
-		mask |= 1 << LayerMask.NameToLayer(name);
+	
+	}
+}
+
+public class IdleState : State
+{
+	private EnemyScript enemy;
+	private float moveDelay;
+	private float waitingTime;
+	private bool toRotate;
+	
+	public override void EnterState(GameObject go)
+	{
+		enemy = go.GetComponent<EnemyScript>();
+		moveDelay = enemy.waypointWait[enemy.currentWaypoint];
+		toRotate = enemy.waypointRotate[enemy.currentWaypoint];
+				
+		waitingTime = Time.time;
 	}
 	
-		//Turn off the bit using an AND operation with the complement of the shifted int
-	private void HideLayer(LayerMask mask, string name) 
+	public override void UpdateState(GameObject go)
 	{
-		mask &=  ~(1 << LayerMask.NameToLayer(name));
+		if(toRotate)
+		{
+			this.machine.SwitchState(enemy.rotate);
+			return;
+		}
+
+		else if(Time.time - waitingTime >= moveDelay)
+		{
+			enemy.SetNextWaypoint();
+			this.machine.SwitchState(enemy.moving);
+			return;
+		}
+		
+		enemy.Look();
 	}
 	
-		//Toggle the bit using a XOR operation
-	private void ToggleLayer(LayerMask mask, string name) 
+	public override void ExitState(GameObject go)
 	{
-		mask ^= 1 << LayerMask.NameToLayer(name);
+	
+	}
+}
+
+public class RotateState : State
+{
+	private EnemyScript enemy;
+	private float moveDelay;
+	private float rotationDelay;
+	private float rotationAngle;
+	private Quaternion toRotation;
+	private float waitingTime;
+	
+	public override void EnterState(GameObject go)
+	{
+		enemy = go.GetComponent<EnemyScript>();
+		moveDelay = enemy.waypointWait[enemy.currentWaypoint];
+		rotationDelay = enemy.waypointRotateTime[enemy.currentWaypoint];
+		rotationAngle = enemy.waypointAngle[enemy.currentWaypoint];
+		
+		toRotation = Quaternion.Euler(enemy.transform.rotation.eulerAngles + new Vector3(0.0f, rotationAngle, 0.0f));
+		
+		waitingTime = Time.time;
+	}
+	
+	public override void UpdateState(GameObject go)
+	{
+		if(Time.time - waitingTime >= rotationDelay)
+		{
+			enemy.transform.rotation = Quaternion.RotateTowards(enemy.transform.rotation, toRotation, 700.0f * Time.deltaTime);
+		}
+		
+		if(Time.time - waitingTime >= moveDelay)
+		{
+			enemy.SetNextWaypoint();
+			this.machine.SwitchState(enemy.moving);
+			return;
+		}
+	}
+	
+	public override void ExitState(GameObject go)
+	{
+		
+	}
+}
+
+public class AttackState : State
+{
+	private EnemyScript enemy;
+	
+	public override void EnterState(GameObject go)
+	{
+		enemy = go.GetComponent<EnemyScript>();
+		Debug.LogError("Spotted !");
+	}
+	
+	public override void UpdateState(GameObject go)
+	{
+		
+	}
+	
+	public override void ExitState(GameObject go)
+	{
+		
 	}
 }

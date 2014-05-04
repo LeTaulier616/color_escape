@@ -50,7 +50,7 @@ public class StateMachine : MonoBehaviour
 	}
 
 	public void SwitchState(State state)
-	{
+	{		
 		if (this.curState != null)
 			this.curState.ExitState(this.gameObject);
 		if (state != null)
@@ -58,6 +58,7 @@ public class StateMachine : MonoBehaviour
 			state.SetStateMachine(this);
 			state.EnterState(this.gameObject);
 		}
+		
 		this.curState = state;
 	}
 }

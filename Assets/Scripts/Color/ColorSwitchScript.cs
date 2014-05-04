@@ -177,20 +177,25 @@ public class ColorSwitchScript : MonoBehaviour {
 			go.SendMessage("Reappear");
 		}
 	}
-
-	private void ShowLayer(string layerName) 
+	
+		//Turn on the bit using an OR operation
+	private void ShowLayer(int mask, string name) 
 	{
-		Camera.main.cullingMask |= 1 << LayerMask.NameToLayer(layerName);
+		mask |= 1 << LayerMask.NameToLayer(name);
 	}
 	
-	private void HideLayer(string layerName) {
-		Camera.main.cullingMask &=  ~(1 << LayerMask.NameToLayer(layerName));
+		//Turn off the bit using an AND operation with the complement of the shifted int
+	private void HideLayer(int mask, string name) 
+	{
+		mask &=  ~(1 << LayerMask.NameToLayer(name));
 	}
 	
-	private void ToggleLayer(string layerName) {
-		Camera.main.cullingMask ^= 1 << LayerMask.NameToLayer(layerName);
+		//Toggle the bit using a XOR operation
+	private void ToggleLayer(int mask, string name) 
+	{
+		mask ^= 1 << LayerMask.NameToLayer(name);
 	}
-
+	
 	private void CheckConnectedPads()
 	{
 		if (!playerIndexSet || !prevState.IsConnected)

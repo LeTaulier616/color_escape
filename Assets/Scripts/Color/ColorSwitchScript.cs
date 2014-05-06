@@ -13,129 +13,75 @@ public class ColorSwitchScript : MonoBehaviour {
 
 	private AmplifyColorEffect colorEffect;
 	private Camera colorCamera;
-
-	private GameObject[] blueObjects, yellowObjects, redObjects, greenObjects;
-
+	
 	private bool playerIndexSet = false;
 	private PlayerIndex playerIndex;
 	private GamePadState state;
 	private GamePadState prevState;
 	
+	private vp_FPPlayerEventHandler player;
+	
 	// Use this for initialization
 	void Awake() 
 	{
+		player = GameObject.FindGameObjectWithTag("Player").GetComponent<vp_FPPlayerEventHandler>();
 		colorEffect = Camera.main.GetComponent<AmplifyColorEffect>();
-
-		blueObjects = GameObject.FindGameObjectsWithTag("Blue");
-		yellowObjects = GameObject.FindGameObjectsWithTag("Yellow");
-		redObjects = GameObject.FindGameObjectsWithTag("Red");
-		greenObjects = GameObject.FindGameObjectsWithTag("Green");
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-		CheckConnectedPads();
-		state = GamePad.GetState(playerIndex);
-
-		if (canChangeColor)
-		{
-			UpdateColorInputs();
+		if(canChangeColor)
 			UpdateEffect();
-		}
 	}
 
 	void LateUpdate()
 	{
-		prevState = state;
-		previousColor = currentColor;
+		if(canChangeColor)
+			previousColor = currentColor;
 	}
 	
-	public void UpdateColorInputs()
+	protected virtual void OnEnable()
 	{
-		if(vp_Input.GetButtonDown("ColorBlue") || OnButtonDown(state.DPad.Left, prevState.DPad.Left))
-		{
-			if(currentColor != ColorChoices.Blue)
-			{
-				currentColor = ColorChoices.Blue;
-			}
-			
-			else
-			{
-				currentColor = ColorChoices.None;
-			}
-		}
-		
-		if(vp_Input.GetButtonDown("ColorYellow") || OnButtonDown(state.DPad.Up, prevState.DPad.Up))
-		{
-			if(currentColor != ColorChoices.Yellow)
-			{
-				currentColor = ColorChoices.Yellow;
-			}
-			
-			else
-			{
-				currentColor = ColorChoices.None;
-			}
-		}
-		
-		if(vp_Input.GetButtonDown("ColorRed") || OnButtonDown(state.DPad.Right, prevState.DPad.Right))
-		{
-			if(currentColor != ColorChoices.Red)
-			{
-				currentColor = ColorChoices.Red;
-			}
-			
-			else
-			{
-				currentColor = ColorChoices.None;
-			}
-		}
-		
-		if(vp_Input.GetButtonDown("ColorGreen") || OnButtonDown(state.DPad.Down, prevState.DPad.Down))
-		{
-			if(currentColor != ColorChoices.Green)
-			{
-				currentColor = ColorChoices.Green;
-			}
-			
-			else
-			{
-				currentColor = ColorChoices.None;
-			}
-		}
+		if (player != null)
+			player.Register(this);
 	}
-
-	public void UpdateEffect()
+	protected virtual void OnDisable()
 	{
+		if (player != null)
+			player.Unregister(this);
+	}
+	
+	public void UpdateEffect()
+	{		
 		switch(currentColor)
 		{
 			case ColorChoices.Blue:
 				colorEffect.LutTexture = blueColor;
-				Disappear(blueObjects);
+				player.Disappear.Send("Blue");
 				break;
 
 			case ColorChoices.Yellow:
 				colorEffect.LutTexture = yellowColor;
-				Disappear(yellowObjects);
+				player.Disappear.Send("Yellow");
 				break;
 
 			case ColorChoices.Red:
 				colorEffect.LutTexture = redColor;
-				Disappear(redObjects);
+				player.Disappear.Send("Red");
 				break;
 
 			case ColorChoices.Green:
 				colorEffect.LutTexture = greenColor;
-				Disappear(greenObjects);
+				player.Disappear.Send("Green");
 				break;
 
 			case ColorChoices.None:
 				colorEffect.LutTexture = null;
-				Reappear(blueObjects);
-				Reappear(yellowObjects);
-				Reappear(redObjects);
-				Reappear(greenObjects);
+				player.Reappear.Send("Blue");
+				player.Reappear.Send("Yellow");
+				player.Reappear.Send("Red");
+				player.Reappear.Send("Green");
 				break;
 		}
 
@@ -144,38 +90,90 @@ public class ColorSwitchScript : MonoBehaviour {
 			switch(previousColor)
 			{
 				case ColorChoices.Blue:
-					Reappear(blueObjects);
+					player.Reappear.Send("Blue");
+					player.SwitchBlue.TryStop();
 					break;
 
 				case ColorChoices.Yellow:
-					Reappear(yellowObjects);
+					player.Reappear.Send("Yellow");
+					player.SwitchYellow.TryStop();
 					break;
 
 				case ColorChoices.Red:
-					Reappear(redObjects);
+					player.Reappear.Send("Red");
+					player.SwitchRed.TryStop();
 					break;
 
 				case ColorChoices.Green:
-					Reappear(greenObjects);
+					player.Reappear.Send("Green");
+					player.SwitchGreen.TryStop();
 					break;
 			}
 		}
 	}
-
-	void Disappear(GameObject[] array)
+	
+	protected virtual bool CanStart_SwitchBlue()
 	{
-		foreach(GameObject go in array)
-		{
-			go.SendMessage("Disappear");
-		}
+		return canChangeColor;
+	}
+	
+	protected virtual void OnStart_SwitchBlue()
+	{
+		currentColor = ColorChoices.Blue;
+	}
+	
+	protected virtual void OnStop_SwitchBlue()
+	{
+		if(currentColor == ColorChoices.Blue)
+			currentColor = ColorChoices.None;
 	}
 
-	void Reappear(GameObject[] array)
+	protected virtual bool CanStart_SwitchYellow()
 	{
-		foreach(GameObject go in array)
-		{
-			go.SendMessage("Reappear");
-		}
+		return canChangeColor;
+	}
+	
+	protected virtual void OnStart_SwitchYellow()
+	{
+		currentColor = ColorChoices.Yellow;
+	}
+	
+	protected virtual void OnStop_SwitchYellow()
+	{
+		if(currentColor == ColorChoices.Yellow)
+			currentColor = ColorChoices.None;
+	}
+
+	protected virtual bool CanStart_SwitchRed()
+	{
+		return canChangeColor;
+	}
+	
+	protected virtual void OnStart_SwitchRed()
+	{
+		currentColor = ColorChoices.Red;
+	}
+	
+	protected virtual void OnStop_SwitchRed()
+	{
+		if(currentColor == ColorChoices.Red)
+			currentColor = ColorChoices.None;
+	}
+	
+	protected virtual bool CanStart_SwitchGreen()
+	{
+		return canChangeColor;
+	}
+	
+	protected virtual void OnStart_SwitchGreen()
+	{
+		currentColor = ColorChoices.Green;
+	}
+	
+	protected virtual void OnStop_SwitchGreen()
+	{
+		if(currentColor == ColorChoices.Green)
+			currentColor = ColorChoices.None;
 	}
 	
 		//Turn on the bit using an OR operation
@@ -195,31 +193,4 @@ public class ColorSwitchScript : MonoBehaviour {
 	{
 		mask ^= 1 << LayerMask.NameToLayer(name);
 	}
-	
-	private void CheckConnectedPads()
-	{
-		if (!playerIndexSet || !prevState.IsConnected)
-		{
-			for (int i = 0; i < 4; ++i)
-			{
-				PlayerIndex testPlayerIndex = (PlayerIndex)i;
-				GamePadState testState = GamePad.GetState(testPlayerIndex);
-				if (testState.IsConnected)
-				{
-					Debug.Log(string.Format("GamePad found {0}", testPlayerIndex));
-					playerIndex = testPlayerIndex;
-					playerIndexSet = true;
-				}
-			}
-		}
-	}
-
-	private bool OnButtonDown(ButtonState state, ButtonState prevstate)
-	{
-		if(state == ButtonState.Pressed && prevstate == ButtonState.Released)
-			return true;
-		else 
-			return false;
-	}
-	
 }

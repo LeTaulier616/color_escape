@@ -95,6 +95,7 @@ public class vp_FPInput : MonoBehaviour
 		InputZoom();
 		InputReload();
 		InputSetWeapon();
+		InputSwitchColor();
 
 	}
 
@@ -217,7 +218,44 @@ public class vp_FPInput : MonoBehaviour
 
 	}
 
-
+	protected virtual void InputSwitchColor()
+	{
+		if(vp_Input.GetButtonDown("ColorBlue") || OnButtonDown(state.DPad.Left, prevState.DPad.Left))
+		{			
+			if(!Player.SwitchBlue.Active)
+				Player.SwitchBlue.TryStart();
+			else
+				Player.SwitchBlue.TryStop();
+		}
+		
+		if(vp_Input.GetButtonDown("ColorYellow") || OnButtonDown(state.DPad.Up, prevState.DPad.Up))
+		{
+			if(!Player.SwitchYellow.Active)
+				Player.SwitchYellow.TryStart();
+				
+			else
+				Player.SwitchYellow.TryStop();
+		}
+		
+		if(vp_Input.GetButtonDown("ColorRed") || OnButtonDown(state.DPad.Right, prevState.DPad.Right))
+		{
+			if(!Player.SwitchRed.Active)
+				Player.SwitchRed.TryStart();
+			
+			else
+				Player.SwitchRed.TryStop();
+		}
+		
+		if(vp_Input.GetButtonDown("ColorGreen") || OnButtonDown(state.DPad.Down, prevState.DPad.Down))
+		{
+			if(!Player.SwitchGreen.Active)
+				Player.SwitchGreen.TryStart();
+			
+			else
+				Player.SwitchGreen.TryStop();
+		}
+	}
+	
 	/// <summary>
 	/// zoom in using the zoom modifier key(s)
 	/// </summary>

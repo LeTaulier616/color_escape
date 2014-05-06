@@ -3,6 +3,7 @@ using UnityEditor;
 using System.Collections;
 
 [CustomEditor(typeof(ColoredObjectScript))]
+[CanEditMultipleObjects]
 public class ColoredObjectScriptEditor : Editor {
 
 	ColoredObjectScript _target;

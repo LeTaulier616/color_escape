@@ -35,7 +35,7 @@ public class ColorZoneScript : MonoBehaviour {
 		{
 			SwitchColorChange();
 			colorScript.currentColor = (ColorSwitchScript.ColorChoices)currentColor;
-			Invoke("UpdateEffect", volume.EnterBlendTime);
+			vp_Timer.In(volume.EnterBlendTime, colorScript.UpdateEffect);
 		}
 	}
 
@@ -44,7 +44,7 @@ public class ColorZoneScript : MonoBehaviour {
 		if(other.CompareTag("Player"))
 		{
 			colorScript.currentColor = ColorSwitchScript.ColorChoices.None;
-			Invoke("SwitchColorChange", cameraEffect.ExitVolumeBlendTime);
+			vp_Timer.In(cameraEffect.ExitVolumeBlendTime, SwitchColorChange);
 		}
 	}
 

@@ -191,7 +191,6 @@ public class EnemyScript : StateMachine
 				SetNextWaypoint();
 			}
 			
-			Debug.Log(currentWaypoint);
 			return;
 		}
 
@@ -206,7 +205,6 @@ public class EnemyScript : StateMachine
 				SetNextWaypoint();
 			}
 			
-			Debug.Log(currentWaypoint);
 			return;
 		}
 	}

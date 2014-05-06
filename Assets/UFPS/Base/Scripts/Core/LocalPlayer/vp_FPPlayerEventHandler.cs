@@ -56,6 +56,10 @@ public class vp_FPPlayerEventHandler : vp_StateEventHandler
 	public vp_Activity Reload;
 	public vp_Activity Climb;
 	public vp_Activity Interact;
+	public vp_Activity SwitchBlue;
+	public vp_Activity SwitchYellow;
+	public vp_Activity SwitchRed;
+	public vp_Activity SwitchGreen;
 	public vp_Activity<int> SetWeapon;
 	public vp_Activity<Vector3> Earthquake;
 
@@ -96,6 +100,8 @@ public class vp_FPPlayerEventHandler : vp_StateEventHandler
 	public vp_Value<Texture> Crosshair;
 	public vp_Value<Texture> GroundTexture;
 	public vp_Value<vp_SurfaceIdentifier> SurfaceType;
+	public vp_Message<string> Disappear;
+	public vp_Message<string> Reappear;
 
 
 	/// <summary>
